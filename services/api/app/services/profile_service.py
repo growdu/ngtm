@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.repositories.bazi_repository import BaziRepository
 from app.repositories.intake_repository import IntakeRepository
 from app.repositories.profile_repository import ProfileRepository
 
@@ -9,9 +10,11 @@ class ProfileService:
         self,
         repository: ProfileRepository | None = None,
         intake_repository: IntakeRepository | None = None,
+        bazi_repository: BaziRepository | None = None,
     ) -> None:
         self.repository = repository or ProfileRepository()
         self.intake_repository = intake_repository or IntakeRepository()
+        self.bazi_repository = bazi_repository or BaziRepository()
 
     def get_current_profile(self, db: Session, *, user_id):
         return self.repository.get_current(db, user_id=user_id)
@@ -22,10 +25,13 @@ class ProfileService:
 
         records = self.intake_repository.list_records(db, user_id=user.id)
         events = self.intake_repository.list_life_events(db, user_id=user.id)
+        bazi = self.bazi_repository.get_current(db, user_id=user.id)
         questionnaire_count = sum(1 for record in records if record.intake_type == "questionnaire_answer")
 
-        risk_preference = min(0.35 + questionnaire_count * 0.08 + len(events) * 0.05, 0.92)
-        rationality = min(0.55 + questionnaire_count * 0.04, 0.9)
+        bazi_score_ratio = (bazi.score / 100) if bazi is not None else 0.6
+
+        risk_preference = min(0.35 + questionnaire_count * 0.08 + len(events) * 0.05 + bazi_score_ratio * 0.05, 0.92)
+        rationality = min(0.55 + questionnaire_count * 0.04 + bazi_score_ratio * 0.08, 0.9)
         control_drive = min(0.5 + len(events) * 0.06, 0.88)
         long_term = min(0.48 + questionnaire_count * 0.05, 0.89)
         execution_strength = min(0.52 + len(events) * 0.07, 0.91)
@@ -86,6 +92,7 @@ class ProfileService:
             "intakeRecordCount": len(records),
             "questionnaireCount": questionnaire_count,
             "lifeEventCount": len(events),
+            "baziScore": bazi.score if bazi is not None else None,
         }
 
         profile = self.repository.create_version(
@@ -101,4 +108,3 @@ class ProfileService:
             source_snapshot=source_snapshot,
         )
         return profile, source_snapshot
-

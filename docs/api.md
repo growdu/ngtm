@@ -132,6 +132,72 @@
 
 ---
 
+## 5.3 获取原始输入证据
+
+`GET /intake/records`
+
+### 响应
+
+```json
+[
+  {
+    "recordId": "uuid",
+    "intakeType": "basic_info",
+    "sourceChannel": "web",
+    "payload": {
+      "name": "张三"
+    },
+    "confidence": 1.0,
+    "submittedAt": "2026-05-09T00:00:00Z"
+  }
+]
+```
+
+说明：
+
+1. 该接口用于查看用户原始证据链
+2. 画像引擎后续也将以这些记录作为主要输入
+
+---
+
+## 5.4 获取当前八字分析
+
+`GET /bazi/current`
+
+### 响应
+
+```json
+{
+  "analysisId": "uuid",
+  "chart": {
+    "yearGz": "甲子",
+    "monthGz": "乙丑",
+    "dayGz": "丙寅",
+    "hourGz": "丁卯"
+  },
+  "featureData": {
+    "fiveElementsBias": {
+      "wood": 0.4,
+      "fire": 0.5,
+      "earth": 0.2,
+      "metal": 0.3,
+      "water": 0.4
+    }
+  },
+  "interpretationData": {
+    "summary": [
+      "当前为占位八字分析结果",
+      "后续阶段将替换为更完整的四柱与规则引擎"
+    ]
+  },
+  "score": 73,
+  "confidence": 0.65,
+  "engineVersion": "bazi-v0"
+}
+```
+
+---
+
 ## 6. 图片上传接口
 
 ## 6.1 获取上传凭证

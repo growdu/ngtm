@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.schemas.user import BasicIntakeRequest, BasicIntakeResponse, UserMeResponse
+from app.services.bazi_service import BaziService
 from app.services.intake_service import IntakeService
 from app.services.user_service import UserService
 
@@ -15,9 +16,11 @@ def intake_basic(
     db: Session = Depends(get_db),
     service: UserService = Depends(UserService),
     intake_service: IntakeService = Depends(IntakeService),
+    bazi_service: BaziService = Depends(BaziService),
 ) -> BasicIntakeResponse:
     user = service.intake_basic(db, payload)
     intake_service.record_basic_intake(db, user_id=user.id, payload=payload)
+    bazi_service.generate_from_user(db, user=user)
     return BasicIntakeResponse(userId=user.id)
 
 

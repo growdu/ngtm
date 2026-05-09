@@ -48,6 +48,25 @@ def upgrade() -> None:
     op.create_index("ix_intake_records_intake_type", "intake_records", ["intake_type"])
 
     op.create_table(
+        "bazi_analyses",
+        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column("year_gz", sa.String(length=8), nullable=False),
+        sa.Column("month_gz", sa.String(length=8), nullable=False),
+        sa.Column("day_gz", sa.String(length=8), nullable=False),
+        sa.Column("hour_gz", sa.String(length=8), nullable=False),
+        sa.Column("chart_data", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("feature_data", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("interpretation_data", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("score", sa.Integer(), nullable=False),
+        sa.Column("confidence", sa.Numeric(5, 4), nullable=False),
+        sa.Column("engine_version", sa.String(length=32), nullable=False, server_default="bazi-v0"),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+    )
+    op.create_index("ix_bazi_analyses_user_id", "bazi_analyses", ["user_id"])
+
+    op.create_table(
         "match_results",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
         sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
@@ -160,6 +179,9 @@ def downgrade() -> None:
 
     op.drop_index("ix_match_results_user_profile", table_name="match_results")
     op.drop_table("match_results")
+
+    op.drop_index("ix_bazi_analyses_user_id", table_name="bazi_analyses")
+    op.drop_table("bazi_analyses")
 
     op.drop_index("ix_intake_records_intake_type", table_name="intake_records")
     op.drop_index("ix_intake_records_user_id", table_name="intake_records")

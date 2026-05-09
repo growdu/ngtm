@@ -1,3 +1,4 @@
+from app.models.bazi_analysis import BaziAnalysis
 from app.models.advice_plan import AdvicePlan
 from app.models.base import Base
 from app.models.image_asset import ImageAsset
@@ -10,6 +11,7 @@ from app.models.user import User
 
 __all__ = [
     "AdvicePlan",
+    "BaziAnalysis",
     "Base",
     "ImageAsset",
     "IntakeRecord",

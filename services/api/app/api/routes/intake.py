@@ -1,0 +1,34 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.db import get_db
+from app.schemas.intake import IntakeRecordItem
+from app.services.intake_service import IntakeService
+from app.services.user_service import UserService
+
+router = APIRouter(prefix="/intake", tags=["intake"])
+
+
+@router.get("/records", response_model=list[IntakeRecordItem])
+def list_intake_records(
+    db: Session = Depends(get_db),
+    user_service: UserService = Depends(UserService),
+    intake_service: IntakeService = Depends(IntakeService),
+) -> list[IntakeRecordItem]:
+    user = user_service.get_current_user(db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    records = intake_service.list_records(db, user_id=user.id)
+    return [
+        IntakeRecordItem(
+            recordId=record.id,
+            intakeType=record.intake_type,
+            sourceChannel=record.source_channel,
+            payload=record.payload,
+            confidence=float(record.confidence) if record.confidence is not None else None,
+            submittedAt=record.submitted_at,
+        )
+        for record in records
+    ]
+
