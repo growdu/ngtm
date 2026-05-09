@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.schemas.event import LifeEventCreateRequest, LifeEventItem, LifeEventResponse
 from app.services.intake_service import IntakeService
+from app.services.profile_workflow_service import ProfileWorkflowService
 from app.services.user_service import UserService
 
 router = APIRouter(prefix="/events", tags=["events"])
@@ -15,13 +16,15 @@ def create_event(
     db: Session = Depends(get_db),
     user_service: UserService = Depends(UserService),
     intake_service: IntakeService = Depends(IntakeService),
+    workflow_service: ProfileWorkflowService = Depends(ProfileWorkflowService),
 ) -> LifeEventResponse:
     user = user_service.get_current_user(db)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
     event = intake_service.create_life_event(db, user_id=user.id, payload=payload)
-    return LifeEventResponse(eventId=event.id)
+    job, profile, _, _ = workflow_service.recompute(db, user=user, reason="life_event_created")
+    return LifeEventResponse(eventId=event.id, jobId=job.id, profileVersion=profile.version_no)
 
 
 @router.get("", response_model=list[LifeEventItem])
@@ -46,4 +49,3 @@ def list_events(
         )
         for event in events
     ]
-

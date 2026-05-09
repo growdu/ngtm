@@ -344,11 +344,10 @@
 
 ```json
 {
-  "success": true,
-  "data": {
-    "eventId": "uuid",
-    "recomputeTriggered": true
-  }
+  "eventId": "uuid",
+  "recomputeTriggered": true,
+  "jobId": "uuid",
+  "profileVersion": 4
 }
 ```
 

@@ -2,6 +2,7 @@
 
 import {
   ApiError,
+  createLifeEvent,
   fetchCurrentAdvice,
   fetchCurrentBazi,
   fetchCurrentMatch,
@@ -9,6 +10,7 @@ import {
   fetchCurrentUser,
   fetchHealth,
   fetchIntakeRecords,
+  fetchLifeEvents,
   fetchNextQuestions,
   recomputeProfile,
   submitBasicIntake,
@@ -17,6 +19,7 @@ import {
   type BaziCurrentResponse,
   type HealthResponse,
   type IntakeRecordItem,
+  type LifeEventItem,
   type MatchCurrentResponse,
   type ProfileSummaryResponse,
   type QuestionnaireQuestion,
@@ -34,10 +37,19 @@ const INITIAL_FORM = {
   birthPlace: ""
 };
 
+const INITIAL_EVENT_FORM = {
+  eventType: "career_change",
+  eventTime: "",
+  title: "",
+  description: "",
+  impactScore: "70"
+};
+
 type DashboardState = {
   health: HealthResponse | null;
   user: UserMeResponse | null;
   records: IntakeRecordItem[];
+  events: LifeEventItem[];
   bazi: BaziCurrentResponse | null;
   profile: ProfileSummaryResponse | null;
   match: MatchCurrentResponse | null;
@@ -142,12 +154,14 @@ export function IntakeWorkbench() {
     health: null,
     user: null,
     records: [],
+    events: [],
     bazi: null,
     profile: null,
     match: null,
     advice: null
   });
   const [form, setForm] = useState(INITIAL_FORM);
+  const [eventForm, setEventForm] = useState(INITIAL_EVENT_FORM);
   const [questions, setQuestions] = useState<QuestionnaireQuestion[]>([]);
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState<Record<string, string>>({});
   const [statusText, setStatusText] = useState("等待首次建档。");
@@ -170,6 +184,7 @@ export function IntakeWorkbench() {
         health,
         user: null,
         records: [],
+        events: [],
         bazi: null,
         profile: null,
         match: null,
@@ -178,8 +193,9 @@ export function IntakeWorkbench() {
       return;
     }
 
-    const [records, bazi, profile, match, advice] = await Promise.all([
+    const [records, events, bazi, profile, match, advice] = await Promise.all([
       fetchIntakeRecords(API_BASE_URL),
+      fetchLifeEvents(API_BASE_URL),
       optionalRequest(() => fetchCurrentBazi(API_BASE_URL)),
       optionalRequest(() => fetchCurrentProfile(API_BASE_URL)),
       optionalRequest(() => fetchCurrentMatch(API_BASE_URL)),
@@ -190,6 +206,7 @@ export function IntakeWorkbench() {
       health,
       user,
       records,
+      events,
       bazi,
       profile,
       match,
@@ -306,6 +323,38 @@ export function IntakeWorkbench() {
       setStatusText(`问答已提交，画像更新到版本 ${result.profileVersion}`);
     } catch (error) {
       setErrorText(error instanceof Error ? error.message : "问答提交失败");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleSubmitEvent(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setErrorText(null);
+
+    if (!eventForm.eventTime || !eventForm.title) {
+      setErrorText("请填写事件时间和事件标题。");
+      return;
+    }
+
+    setIsBusy(true);
+
+    try {
+      const result = await createLifeEvent(API_BASE_URL, {
+        eventType: eventForm.eventType,
+        eventTime: new Date(eventForm.eventTime).toISOString(),
+        title: eventForm.title,
+        description: eventForm.description || null,
+        impactScore: Number(eventForm.impactScore) || null,
+        payload: {
+          source: "web_workbench"
+        }
+      });
+      await loadDashboard();
+      setEventForm(INITIAL_EVENT_FORM);
+      setStatusText(`事件已记录，画像更新到版本 ${result.profileVersion}`);
+    } catch (error) {
+      setErrorText(error instanceof Error ? error.message : "事件提交失败");
     } finally {
       setIsBusy(false);
     }
@@ -467,6 +516,76 @@ export function IntakeWorkbench() {
               ) : (
                 <EmptyState text="当前还没有用户档案，先提交基础建档。" />
               )}
+            </SectionCard>
+
+            <SectionCard title="重大事件录入" eyebrow="LIFE EVENTS">
+              <form onSubmit={handleSubmitEvent} style={{ display: "grid", gap: 14 }}>
+                <label style={{ display: "grid", gap: 8 }}>
+                  <span style={{ color: "#d4d4d8" }}>事件类型</span>
+                  <select
+                    value={eventForm.eventType}
+                    onChange={(event) =>
+                      setEventForm((current) => ({ ...current, eventType: event.target.value }))
+                    }
+                    style={inputStyle}
+                  >
+                    <option value="career_change">职业变动</option>
+                    <option value="relationship_change">关系变化</option>
+                    <option value="relocation">迁居</option>
+                    <option value="education">学习成长</option>
+                    <option value="financial_shift">财务波动</option>
+                  </select>
+                </label>
+                <label style={{ display: "grid", gap: 8 }}>
+                  <span style={{ color: "#d4d4d8" }}>事件时间</span>
+                  <input
+                    type="datetime-local"
+                    value={eventForm.eventTime}
+                    onChange={(event) =>
+                      setEventForm((current) => ({ ...current, eventTime: event.target.value }))
+                    }
+                    style={inputStyle}
+                  />
+                </label>
+                <label style={{ display: "grid", gap: 8 }}>
+                  <span style={{ color: "#d4d4d8" }}>事件标题</span>
+                  <input
+                    value={eventForm.title}
+                    onChange={(event) =>
+                      setEventForm((current) => ({ ...current, title: event.target.value }))
+                    }
+                    placeholder="如：离职创业"
+                    style={inputStyle}
+                  />
+                </label>
+                <label style={{ display: "grid", gap: 8 }}>
+                  <span style={{ color: "#d4d4d8" }}>事件描述</span>
+                  <textarea
+                    value={eventForm.description}
+                    onChange={(event) =>
+                      setEventForm((current) => ({ ...current, description: event.target.value }))
+                    }
+                    placeholder="补充事件背景和你的主观感受"
+                    style={{ ...inputStyle, minHeight: 96, resize: "vertical" }}
+                  />
+                </label>
+                <label style={{ display: "grid", gap: 8 }}>
+                  <span style={{ color: "#d4d4d8" }}>影响强度（0-100）</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={eventForm.impactScore}
+                    onChange={(event) =>
+                      setEventForm((current) => ({ ...current, impactScore: event.target.value }))
+                    }
+                    style={inputStyle}
+                  />
+                </label>
+                <button type="submit" style={primaryButtonStyle} disabled={isBusy || !dashboard.user}>
+                  {isBusy ? "记录中..." : "记录事件并重算"}
+                </button>
+              </form>
             </SectionCard>
 
             <SectionCard title="持续问答校准" eyebrow="QUESTIONNAIRE">
@@ -673,6 +792,35 @@ export function IntakeWorkbench() {
                 <InfoBlock title="当前建议摘要" value={dashboard.advice.summary} />
               ) : (
                 <EmptyState text="建议依赖当前画像和匹配结果，重算画像后会生成。" />
+              )}
+            </SectionCard>
+
+            <SectionCard title="人生事件时间线" eyebrow="TIMELINE">
+              {dashboard.events.length > 0 ? (
+                <div style={{ display: "grid", gap: 12 }}>
+                  {dashboard.events.map((item) => (
+                    <div
+                      key={item.eventId}
+                      style={{
+                        borderRadius: 18,
+                        padding: 16,
+                        background: "rgba(255, 255, 255, 0.04)",
+                        border: "1px solid rgba(255, 255, 255, 0.06)"
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+                        <strong>{item.title}</strong>
+                        <span style={{ color: "#9ca3af", fontSize: 12 }}>{formatDateTime(item.eventTime)}</span>
+                      </div>
+                      <div style={{ color: "#d4d4d8", lineHeight: 1.7 }}>{item.description || "无补充描述"}</div>
+                      <div style={{ color: "#9ca3af", lineHeight: 1.7, marginTop: 8 }}>
+                        类型：{item.eventType} / 影响强度：{item.impactScore ?? "未填写"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState text="还没有人生事件，录入重大转折后会出现在这里。" />
               )}
             </SectionCard>
           </div>

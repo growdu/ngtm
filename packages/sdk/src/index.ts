@@ -115,6 +115,31 @@ export type QuestionnaireAnswerResponse = {
   profileVersion: number;
 };
 
+export type LifeEventCreateRequest = {
+  eventType: string;
+  eventTime: string;
+  title: string;
+  description?: string | null;
+  payload?: Record<string, unknown>;
+  impactScore?: number | null;
+};
+
+export type LifeEventResponse = {
+  eventId: string;
+  recomputeTriggered: boolean;
+  jobId: string;
+  profileVersion: number;
+};
+
+export type LifeEventItem = {
+  eventId: string;
+  eventType: string;
+  eventTime: string;
+  title: string;
+  description: string | null;
+  impactScore: number | null;
+};
+
 export class ApiError extends Error {
   status: number;
 
@@ -207,4 +232,18 @@ export async function submitQuestionnaireAnswers(
     method: "POST",
     body: { answers }
   });
+}
+
+export async function createLifeEvent(
+  apiBaseUrl: string,
+  payload: LifeEventCreateRequest
+): Promise<LifeEventResponse> {
+  return request<LifeEventResponse>(apiBaseUrl, "/events", {
+    method: "POST",
+    body: payload
+  });
+}
+
+export async function fetchLifeEvents(apiBaseUrl: string): Promise<LifeEventItem[]> {
+  return request<LifeEventItem[]>(apiBaseUrl, "/events");
 }

@@ -17,6 +17,8 @@ class LifeEventCreateRequest(BaseModel):
 class LifeEventResponse(BaseModel):
     eventId: UUID
     recomputeTriggered: bool = True
+    jobId: UUID
+    profileVersion: int
 
 
 class LifeEventItem(BaseModel):
@@ -26,4 +28,3 @@ class LifeEventItem(BaseModel):
     title: str
     description: str | None
     impactScore: int | None
-
