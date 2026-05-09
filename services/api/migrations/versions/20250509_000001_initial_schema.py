@@ -48,6 +48,54 @@ def upgrade() -> None:
     op.create_index("ix_intake_records_intake_type", "intake_records", ["intake_type"])
 
     op.create_table(
+        "jobs",
+        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=True),
+        sa.Column("job_type", sa.String(length=64), nullable=False),
+        sa.Column("status", sa.String(length=32), nullable=False, server_default="queued"),
+        sa.Column("payload", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("result", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column("error_message", sa.Text(), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+    )
+    op.create_index("ix_jobs_user_id", "jobs", ["user_id"])
+
+    op.create_table(
+        "profile_versions",
+        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column("version_no", sa.Integer(), nullable=False),
+        sa.Column("summary", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("personality_traits", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("ability_traits", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("relationship_traits", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("fortune_traits", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("confidence_map", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("source_snapshot", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("engine_version", sa.String(length=64), nullable=False, server_default="v0"),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+    )
+    op.create_unique_constraint("uq_profile_versions_user_version", "profile_versions", ["user_id", "version_no"])
+    op.create_index("ix_profile_versions_user_id", "profile_versions", ["user_id"])
+
+    op.create_table(
+        "image_assets",
+        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column("asset_type", sa.String(length=32), nullable=False),
+        sa.Column("storage_key", sa.String(length=512), nullable=False),
+        sa.Column("content_type", sa.String(length=128), nullable=True),
+        sa.Column("metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("quality_score", sa.Numeric(5, 4), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+    )
+    op.create_unique_constraint("uq_image_assets_storage_key", "image_assets", ["storage_key"])
+    op.create_index("ix_image_assets_user_id", "image_assets", ["user_id"])
+
+    op.create_table(
         "life_events",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
         sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
@@ -69,9 +117,19 @@ def downgrade() -> None:
     op.drop_index("ix_life_events_user_id", table_name="life_events")
     op.drop_table("life_events")
 
+    op.drop_index("ix_image_assets_user_id", table_name="image_assets")
+    op.drop_constraint("uq_image_assets_storage_key", "image_assets", type_="unique")
+    op.drop_table("image_assets")
+
+    op.drop_index("ix_profile_versions_user_id", table_name="profile_versions")
+    op.drop_constraint("uq_profile_versions_user_version", "profile_versions", type_="unique")
+    op.drop_table("profile_versions")
+
+    op.drop_index("ix_jobs_user_id", table_name="jobs")
+    op.drop_table("jobs")
+
     op.drop_index("ix_intake_records_intake_type", table_name="intake_records")
     op.drop_index("ix_intake_records_user_id", table_name="intake_records")
     op.drop_table("intake_records")
 
     op.drop_table("users")
-

@@ -190,6 +190,11 @@
 }
 ```
 
+说明：
+
+1. 当前阶段上传凭证接口先返回占位 `uploadUrl`
+2. 后续接入真实 S3 / MinIO 预签名上传
+
 ---
 
 ## 7. 问答接口
@@ -352,13 +357,16 @@
 
 ```json
 {
-  "success": true,
-  "data": {
-    "jobId": "uuid",
-    "jobType": "recompute_profile"
-  }
+  "jobId": "uuid",
+  "jobType": "recompute_profile",
+  "status": "queued"
 }
 ```
+
+说明：
+
+1. 当前阶段该接口会先创建 `job`
+2. 真实画像计算任务将在后续阶段接入 Worker 与画像引擎
 
 ---
 
@@ -480,12 +488,14 @@
 
 ```json
 {
-  "success": true,
-  "data": {
-    "jobId": "uuid",
-    "jobType": "recompute_profile",
-    "status": "completed"
-  }
+  "jobId": "uuid",
+  "jobType": "recompute_profile",
+  "status": "completed",
+  "payload": {},
+  "result": {},
+  "errorMessage": null,
+  "createdAt": "2026-05-09T00:00:00Z",
+  "updatedAt": "2026-05-09T00:00:01Z"
 }
 ```
 
@@ -555,4 +565,3 @@
 4. 文件上传完整时序
 5. 分页、筛选、排序约定
 6. 幂等与限流策略
-
