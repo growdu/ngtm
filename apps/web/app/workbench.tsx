@@ -1001,6 +1001,7 @@ export function IntakeWorkbench() {
                   {dashboard.timeline.map((item, index) => {
                     const itemKey = `${item.itemType}-${item.occurredAt}-${index}`;
                     const isExpanded = expandedTimelineItemKey === itemKey;
+                    const profileVersion = item.profileVersion;
 
                     return (
                       <div
@@ -1030,13 +1031,13 @@ export function IntakeWorkbench() {
                           >
                             {isExpanded ? "收起详情" : "展开详情"}
                           </button>
-                          {item.profileVersion ? (
+                          {profileVersion !== null ? (
                             <button
                               type="button"
                               style={primaryButtonStyle}
-                              onClick={() => void handleTimelineProfileJump(item.profileVersion)}
+                              onClick={() => void handleTimelineProfileJump(profileVersion)}
                             >
-                              查看 V{item.profileVersion}
+                              查看 V{profileVersion}
                             </button>
                           ) : null}
                         </div>
@@ -1125,7 +1126,7 @@ export function IntakeWorkbench() {
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
                         <strong>
-                          V{item.fromVersion} -> V{item.toVersion}
+                          V{item.fromVersion} {"->"} V{item.toVersion}
                         </strong>
                         <span style={{ color: "#9ca3af", fontSize: 12 }}>{formatDateTime(item.createdAt)}</span>
                       </div>

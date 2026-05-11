@@ -1,6 +1,7 @@
 node_modules/
 .pnpm-store/
 .next/
+*.tsbuildinfo
 dist/
 build/
 .expo/
@@ -21,4 +22,3 @@ __pycache__/
 
 data/
 tmp/
-
