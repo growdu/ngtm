@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./Navigation.module.css";
@@ -17,16 +18,17 @@ const navItems = [
 
 export function Navigation() {
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header className={styles.header}>
       <div className={styles.container}>
-        <Link href="/" className={styles.logo}>
+        <Link href="/" className={styles.logo} onClick={() => setMobileMenuOpen(false)}>
           <span className={styles.logoIcon}>☯</span>
           <span className={styles.logoText}>逆天改命</span>
         </Link>
 
-        <nav className={styles.nav}>
+        <nav className={`${styles.nav} ${mobileMenuOpen ? styles.navOpen : ""}`}>
           {navItems.map((item) => (
             <Link
               key={item.path}
@@ -34,19 +36,34 @@ export function Navigation() {
               className={`${styles.navItem} ${
                 pathname === item.path ? styles.active : ""
               }`}
+              onClick={() => setMobileMenuOpen(false)}
             >
               {item.label}
             </Link>
           ))}
         </nav>
 
-        <div className={styles.userInfo}>
+        <div className={styles.actions}>
           <span className={styles.versionBadge}>V4</span>
           <div className={styles.avatar}>
             <span>张</span>
           </div>
+          <button
+            className={styles.hamburger}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="菜单"
+            aria-expanded={mobileMenuOpen}
+          >
+            <span className={`${styles.hamburgerLine} ${mobileMenuOpen ? styles.open : ""}`} />
+            <span className={`${styles.hamburgerLine} ${mobileMenuOpen ? styles.open : ""}`} />
+            <span className={`${styles.hamburgerLine} ${mobileMenuOpen ? styles.open : ""}`} />
+          </button>
         </div>
       </div>
+
+      {mobileMenuOpen && (
+        <div className={styles.mobileOverlay} onClick={() => setMobileMenuOpen(false)} />
+      )}
     </header>
   );
 }

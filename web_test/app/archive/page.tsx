@@ -1,11 +1,42 @@
 "use client";
 
+import { useState } from "react";
 import { AppShell } from "../components/Navigation";
-import { evolutionHistory, matchResults, profileV4 } from "../data/mockData";
+import { evolutionHistory, profileV4, profileV3, profileV2, profileV1 } from "../data/mockData";
 import styles from "./archive.module.css";
 
+const figureHistoryData = ["王安石", "韩非", "曹操", "曹操"];
+
 export default function ArchivePage() {
-  const figureHistory = ["王安石", "韩非", "曹操", "曹操"];
+  const [exporting, setExporting] = useState<string | null>(null);
+
+  const handleExport = (type: "pdf" | "poster") => {
+    setExporting(type);
+    setTimeout(() => {
+      if (type === "pdf") {
+        alert("PDF 导出功能正在开发中，敬请期待！");
+      } else {
+        alert("分享海报功能正在开发中，敬请期待！");
+      }
+      setExporting(null);
+    }, 1500);
+  };
+
+  const allProfiles = [profileV4, profileV3, profileV2, profileV1];
+
+  const versionScores: Record<number, number> = {
+    4: profileV4.summary.overallScore,
+    3: profileV3.summary.overallScore,
+    2: profileV2.summary.overallScore,
+    1: profileV1.summary.overallScore,
+  };
+
+  const versionKeywords: Record<number, string> = {
+    4: profileV4.summary.keywords.slice(0, 2).join(" / "),
+    3: profileV3.summary.keywords.slice(0, 2).join(" / "),
+    2: profileV2.summary.keywords.slice(0, 2).join(" / "),
+    1: profileV1.summary.keywords.slice(0, 2).join(" / "),
+  };
 
   return (
     <AppShell>
@@ -54,14 +85,14 @@ export default function ArchivePage() {
                   <span className="card-title">历史人物轨迹</span>
                 </div>
                 <div className={styles.figureTrail}>
-                  {figureHistory.map((name, index) => (
+                  {figureHistoryData.map((name, index) => (
                     <div key={index} className={styles.figureItem}>
                       <div className={styles.figureAvatar}>
                         <span>{name[0]}</span>
                       </div>
                       <span className={styles.figureName}>{name}</span>
                       <span className={styles.figureVersion}>V{index + 1}</span>
-                      {index < figureHistory.length - 1 && (
+                      {index < figureHistoryData.length - 1 && (
                         <div className={styles.figureArrow}>→</div>
                       )}
                     </div>
@@ -90,27 +121,11 @@ export default function ArchivePage() {
                       <div className={styles.versionStats}>
                         <div className={styles.versionStat}>
                           <span className={styles.statLabel}>综合评分</span>
-                          <span className={styles.statValue}>
-                            {version === 4
-                              ? profileV4.summary.overallScore
-                              : version === 3
-                                ? 73
-                                : version === 2
-                                  ? 67
-                                  : 61}
-                          </span>
+                          <span className={styles.statValue}>{versionScores[version]}</span>
                         </div>
                         <div className={styles.versionStat}>
                           <span className={styles.statLabel}>关键词</span>
-                          <span className={styles.statValue}>
-                            {version === 4
-                              ? profileV4.summary.keywords.slice(0, 2).join(" / ")
-                              : version === 3
-                                ? "强控制感 / 理性"
-                                : version === 2
-                                  ? "理性控制 / 事业"
-                                  : "行动力强 / 理性"}
-                          </span>
+                          <span className={styles.statValue}>{versionKeywords[version]}</span>
                         </div>
                       </div>
                       {version === 4 && (
@@ -133,13 +148,25 @@ export default function ArchivePage() {
                   将你的成长档案导出为 PDF 或生成分享海报
                 </p>
                 <div className={styles.exportActions}>
-                  <button className={styles.exportBtn}>
-                    <span className={styles.exportIcon}>📄</span>
-                    导出 PDF
+                  <button
+                    className={styles.exportBtn}
+                    onClick={() => handleExport("pdf")}
+                    disabled={exporting === "pdf"}
+                  >
+                    <span className={styles.exportIcon}>
+                      {exporting === "pdf" ? "⏳" : "📄"}
+                    </span>
+                    {exporting === "pdf" ? "导出中..." : "导出 PDF"}
                   </button>
-                  <button className={styles.exportBtn}>
-                    <span className={styles.exportIcon}>🖼</span>
-                    生成分享海报
+                  <button
+                    className={styles.exportBtn}
+                    onClick={() => handleExport("poster")}
+                    disabled={exporting === "poster"}
+                  >
+                    <span className={styles.exportIcon}>
+                      {exporting === "poster" ? "⏳" : "🖼"}
+                    </span>
+                    {exporting === "poster" ? "生成中..." : "生成分享海报"}
                   </button>
                 </div>
               </div>

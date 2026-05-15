@@ -8,6 +8,13 @@ import styles from "./advice.module.css";
 export default function AdvicePage() {
   const [adviceList, setAdviceList] = useState(todayAdvice);
   const [selectedFeedback, setSelectedFeedback] = useState<string | null>(null);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   const handleMarkDone = (id: string) => {
     setAdviceList((prev) =>
@@ -15,10 +22,26 @@ export default function AdvicePage() {
         item.id === id ? { ...item, status: "completed" } : item
       )
     );
+    showToast("已标记为完成！");
+  };
+
+  const handleFeedbackSubmit = () => {
+    if (!selectedFeedback) {
+      showToast("请选择反馈效果");
+      return;
+    }
+    showToast("反馈已提交，感谢你的反馈！");
+    setSelectedFeedback(null);
+    setFeedbackText("");
   };
 
   return (
     <AppShell>
+      {toastMessage && (
+        <div className={styles.toast} role="alert">
+          {toastMessage}
+        </div>
+      )}
       <div className={styles.page}>
         <div className={styles.container}>
           {/* Header */}
@@ -72,6 +95,7 @@ export default function AdvicePage() {
                           <button
                             className={styles.markDoneBtn}
                             onClick={() => handleMarkDone(advice.id)}
+                            aria-label={`标记"${advice.content}\"已执行`}
                           >
                             标记已执行
                           </button>
@@ -113,22 +137,25 @@ export default function AdvicePage() {
                   <span className="card-title">吉日提醒</span>
                 </div>
                 <div className={styles.luckyList}>
-                  {luckyDays.map((day) => (
-                    <div key={day.date} className={styles.luckyItem}>
-                      <div className={styles.luckyDate}>
-                        <span className={styles.dateDay}>
-                          {new Date(day.date).getDate()}
-                        </span>
-                        <span className={styles.dateMonth}>
-                          {new Date(day.date).getMonth() + 1}月
-                        </span>
+                  {luckyDays.map((day) => {
+                    const date = new Date(day.date + "T00:00:00");
+                    return (
+                      <div key={day.date} className={styles.luckyItem}>
+                        <div className={styles.luckyDate}>
+                          <span className={styles.dateDay}>
+                            {date.getDate()}
+                          </span>
+                          <span className={styles.dateMonth}>
+                            {date.getMonth() + 1}月
+                          </span>
+                        </div>
+                        <div className={styles.luckyInfo}>
+                          <span className={styles.luckyActivity}>{day.activity}</span>
+                          <span className={styles.luckyNote}>{day.note}</span>
+                        </div>
                       </div>
-                      <div className={styles.luckyInfo}>
-                        <span className={styles.luckyActivity}>{day.activity}</span>
-                        <span className={styles.luckyNote}>{day.note}</span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -142,18 +169,21 @@ export default function AdvicePage() {
                   <button
                     className={`${styles.feedbackBtn} ${selectedFeedback === "good" ? styles.selected : ""}`}
                     onClick={() => setSelectedFeedback("good")}
+                    aria-label="有效果"
                   >
                     有效果
                   </button>
                   <button
                     className={`${styles.feedbackBtn} ${selectedFeedback === "normal" ? styles.selected : ""}`}
                     onClick={() => setSelectedFeedback("normal")}
+                    aria-label="效果一般"
                   >
                     一般
                   </button>
                   <button
                     className={`${styles.feedbackBtn} ${selectedFeedback === "none" ? styles.selected : ""}`}
                     onClick={() => setSelectedFeedback("none")}
+                    aria-label="无效果"
                   >
                     无效果
                   </button>
@@ -162,8 +192,15 @@ export default function AdvicePage() {
                   placeholder="补充说明（可选）..."
                   className={styles.feedbackInput}
                   rows={3}
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  aria-label="反馈补充说明"
                 />
-                <button className="btn btn-primary" style={{ width: "100%" }}>
+                <button
+                  className="btn btn-primary"
+                  style={{ width: "100%" }}
+                  onClick={handleFeedbackSubmit}
+                >
                   提交反馈
                 </button>
               </div>

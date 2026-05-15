@@ -301,6 +301,74 @@
   color: var(--accent-gold);
 }
 
+/* Toast notification */
+.toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 12px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-gold);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  animation: fadeIn 0.3s ease;
+  box-shadow: 0 4px 16px rgba(182, 136, 61, 0.3);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Completed state */
+.completedState {
+  text-align: center;
+  padding: 80px 24px;
+}
+
+.completedIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--accent-jade);
+  color: var(--bg-primary);
+  font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+
+.completedTitle {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.completedDesc {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.completedSub {
+  font-size: 0.9rem;
+  color: var(--accent-gold);
+}
+
+/* Progress bar wrapper */
+.progressBarWrap {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
 @media (max-width: 900px) {
   .content {
     grid-template-columns: 1fr;

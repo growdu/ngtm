@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AppShell } from "../components/Navigation";
-import { profileV4, profileV3, evolutionHistory } from "../data/mockData";
+import { profileV4, profileV3, profileV2, profileV1, evolutionHistory } from "../data/mockData";
 import styles from "./profile.module.css";
 
 // 雷达图组件
@@ -115,7 +115,10 @@ function RadarChart({ data }: { data: { label: string; value: number }[] }) {
 
 export default function ProfilePage() {
   const [selectedVersion, setSelectedVersion] = useState(4);
-  const profile = selectedVersion === 4 ? profileV4 : profileV3;
+  const [activeTab, setActiveTab] = useState("bazi");
+
+  const allProfiles = { 1: profileV1, 2: profileV2, 3: profileV3, 4: profileV4 };
+  const profile = allProfiles[selectedVersion as keyof typeof allProfiles] || profileV4;
 
   const abilityData = [
     { label: "执行力", value: profile.traits.ability.execution },
@@ -272,20 +275,60 @@ export default function ProfilePage() {
                   <span className="card-title">证据来源</span>
                 </div>
                 <div className={styles.evidenceTabs}>
-                  <button className={`${styles.evidenceTab} ${styles.active}`}>
-                    八字分析
-                  </button>
-                  <button className={styles.evidenceTab}>问答记录</button>
-                  <button className={styles.evidenceTab}>人生事件</button>
-                  <button className={styles.evidenceTab}>面相</button>
-                  <button className={styles.evidenceTab}>手相</button>
+                  {[
+                    { key: "bazi", label: "八字分析" },
+                    { key: "qa", label: "问答记录" },
+                    { key: "events", label: "人生事件" },
+                    { key: "face", label: "面相" },
+                    { key: "palm", label: "手相" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      className={`${styles.evidenceTab} ${activeTab === tab.key ? styles.active : ""}`}
+                      onClick={() => setActiveTab(tab.key)}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
                 <div className={styles.evidenceContent}>
                   <ul className={styles.evidenceList}>
-                    <li>出生日期推算八字命盘</li>
-                    <li>五行强弱统计分析</li>
-                    <li>十神关系分析</li>
-                    <li>大运流年初步预测</li>
+                    {activeTab === "bazi" && (
+                      <>
+                        <li>出生日期推算八字命盘</li>
+                        <li>五行强弱统计分析</li>
+                        <li>十神关系分析</li>
+                        <li>大运流年初步预测</li>
+                      </>
+                    )}
+                    {activeTab === "qa" && (
+                      <>
+                        <li>创业风险偏好问卷回答</li>
+                        <li>职业发展问答反馈</li>
+                        <li>重大决策风格评估</li>
+                      </>
+                    )}
+                    {activeTab === "events" && (
+                      <>
+                        <li>2025年创业经历</li>
+                        <li>2024年职业转型</li>
+                        <li>2023年人际关系变化</li>
+                      </>
+                    )}
+                    {activeTab === "face" && (
+                      <>
+                        <li>眉眼间距分析</li>
+                        <li>鼻梁挺度评估</li>
+                        <li>颧骨高度测量</li>
+                      </>
+                    )}
+                    {activeTab === "palm" && (
+                      <>
+                        <li>生命线连续性分析</li>
+                        <li>智慧线与感情线关系</li>
+                        <li>指节长度比例</li>
+                      </>
+                    )}
                   </ul>
                 </div>
               </div>
