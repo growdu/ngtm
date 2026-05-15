@@ -1,0 +1,312 @@
+.page {
+  min-height: calc(100vh - 64px - 80px);
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Progress Section */
+.progressSection {
+  margin-bottom: 48px;
+  padding: 32px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepItem {
+  display: flex;
+  align-items: center;
+}
+
+.stepDot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.3s ease;
+}
+
+.stepDot.active {
+  background: rgba(182, 136, 61, 0.2);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.stepDot.current {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: var(--bg-primary);
+}
+
+.stepLabel {
+  margin-left: 8px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.stepLabel.active {
+  color: var(--text-primary);
+}
+
+.stepLine {
+  width: 60px;
+  height: 2px;
+  background: var(--border-color);
+  margin: 0 12px;
+}
+
+.stepLine.active {
+  background: var(--accent-gold);
+}
+
+/* Content Section */
+.content {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 48px;
+}
+
+.formSection {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.formHeader {
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+/* Form Styles */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.input,
+.select {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px rgba(182, 136, 61, 0.15);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.timeInput {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.checkboxLabel input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-gold);
+}
+
+/* Notice */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 16px;
+  background: rgba(201, 64, 64, 0.1);
+  border: 1px solid rgba(201, 64, 64, 0.3);
+  border-radius: 8px;
+}
+
+.noticeIcon {
+  font-size: 1.2rem;
+  color: var(--accent-red);
+}
+
+.notice p {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* Impact Section */
+.impactSection {
+  margin-top: 32px;
+  padding: 24px;
+  background: rgba(182, 136, 61, 0.08);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.impactTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent-gold);
+  margin-bottom: 16px;
+}
+
+.impactList {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.impactItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.impactDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-gold);
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Sidebar */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sidebarCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.sidebarTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent-gold);
+  margin-bottom: 12px;
+}
+
+.progressInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.progressStat {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.progressValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.progressLabel {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.sidebarText {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .impactList {
+    grid-template-columns: 1fr;
+  }
+}
