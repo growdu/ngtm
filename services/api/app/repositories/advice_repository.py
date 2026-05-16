@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import delete, desc, select
+from sqlalchemy import delete, desc, select, update
 from sqlalchemy.orm import Session
 
 from app.models.advice_plan import AdvicePlan
@@ -42,3 +42,24 @@ class AdviceRepository:
             .limit(limit)
         )
         return list(db.scalars(statement))
+
+    def update_feedback(
+        self,
+        db: Session,
+        *,
+        user_id: UUID,
+        profile_version: int,
+        feedback: dict,
+    ) -> AdvicePlan | None:
+        statement = select(AdvicePlan).where(
+            AdvicePlan.user_id == user_id,
+            AdvicePlan.profile_version == profile_version,
+        )
+        advice = db.scalar(statement)
+        if advice:
+            current_feedback = advice.execution_feedback or {}
+            current_feedback.update(feedback)
+            advice.execution_feedback = current_feedback
+            db.commit()
+            db.refresh(advice)
+        return advice

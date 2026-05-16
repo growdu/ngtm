@@ -5,6 +5,7 @@ from app.db import get_db
 from app.schemas.user import BasicIntakeRequest, BasicIntakeResponse, UserMeResponse
 from app.services.bazi_service import BaziService
 from app.services.intake_service import IntakeService
+from app.services.profile_workflow_service import ProfileWorkflowService
 from app.services.user_service import UserService
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -17,11 +18,19 @@ def intake_basic(
     service: UserService = Depends(UserService),
     intake_service: IntakeService = Depends(IntakeService),
     bazi_service: BaziService = Depends(BaziService),
+    workflow_service: ProfileWorkflowService = Depends(ProfileWorkflowService),
 ) -> BasicIntakeResponse:
     user = service.intake_basic(db, payload)
     intake_service.record_basic_intake(db, user_id=user.id, payload=payload)
     bazi_service.generate_from_user(db, user=user)
-    return BasicIntakeResponse(userId=user.id)
+    # 触发初始画像生成
+    job, profile, _, _ = workflow_service.recompute(db, user=user, reason="initial_profile_creation")
+    return BasicIntakeResponse(
+        userId=user.id,
+        accepted=True,
+        nextAction="questionnaire",
+        profileVersion=profile.version_no,
+    )
 
 
 @router.get("/me", response_model=UserMeResponse)

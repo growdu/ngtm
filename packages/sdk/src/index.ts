@@ -16,6 +16,7 @@ export type BasicIntakeResponse = {
   userId: string;
   accepted: boolean;
   nextAction: string;
+  profileVersion: number;
 };
 
 export type UserMeResponse = {
@@ -126,6 +127,16 @@ export type QuestionnaireAnswerResponse = {
   recomputeTriggered: boolean;
   jobId: string;
   profileVersion: number;
+};
+
+export type QuestionnaireProgressResponse = {
+  totalGroups: number;
+  totalQuestions: number;
+  groups: Array<{
+    group: string;
+    label: string;
+    count: number;
+  }>;
 };
 
 export type LifeEventCreateRequest = {
@@ -252,8 +263,15 @@ export async function fetchCurrentUser(apiBaseUrl: string): Promise<UserMeRespon
   return request<UserMeResponse>(apiBaseUrl, "/users/me");
 }
 
-export async function fetchIntakeRecords(apiBaseUrl: string): Promise<IntakeRecordItem[]> {
-  return request<IntakeRecordItem[]>(apiBaseUrl, "/intake/records");
+export async function fetchIntakeRecords(
+  apiBaseUrl: string,
+  query?: { intakeType?: string; limit?: number }
+): Promise<IntakeRecordItem[]> {
+  const params = new URLSearchParams();
+  if (query?.intakeType) params.set("intakeType", query.intakeType);
+  if (query?.limit !== undefined) params.set("limit", String(query.limit));
+  const suffix = params.size > 0 ? `?${params.toString()}` : "";
+  return request<IntakeRecordItem[]>(apiBaseUrl, `/intake/records${suffix}`);
 }
 
 export async function fetchCurrentBazi(apiBaseUrl: string): Promise<BaziCurrentResponse> {
@@ -283,6 +301,20 @@ export async function fetchCurrentAdvice(apiBaseUrl: string): Promise<AdviceCurr
   return request<AdviceCurrentResponse>(apiBaseUrl, "/advice/current");
 }
 
+export async function regenerateAdvice(apiBaseUrl: string): Promise<AdviceCurrentResponse> {
+  return request<AdviceCurrentResponse>(apiBaseUrl, "/advice/regenerate", { method: "POST" });
+}
+
+export async function submitAdviceFeedback(
+  apiBaseUrl: string,
+  payload: { feedbackType: string; feedbackText?: string; adviceItemId?: string }
+): Promise<{ success: boolean; message: string }> {
+  return request<{ success: boolean; message: string }>(apiBaseUrl, "/advice/feedback", {
+    method: "POST",
+    body: payload,
+  });
+}
+
 export async function recomputeProfile(
   apiBaseUrl: string,
   reason = "manual_refresh"
@@ -295,6 +327,14 @@ export async function recomputeProfile(
 
 export async function fetchNextQuestions(apiBaseUrl: string): Promise<QuestionnaireNextResponse> {
   return request<QuestionnaireNextResponse>(apiBaseUrl, "/questionnaire/next");
+}
+
+export async function fetchQuestionnaireProgress(apiBaseUrl: string): Promise<QuestionnaireProgressResponse> {
+  return request<QuestionnaireProgressResponse>(apiBaseUrl, "/questionnaire/progress");
+}
+
+export async function resetQuestionnaireProgress(apiBaseUrl: string): Promise<void> {
+  return request<void>(apiBaseUrl, "/questionnaire/reset", { method: "POST" });
 }
 
 export async function submitQuestionnaireAnswers(

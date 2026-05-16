@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { AppShell } from "../components/Navigation";
-import { fetchCurrentProfile, fetchProfileVersions, fetchProfileVersion } from "@ntgm/sdk";
-import type { ProfileSummaryResponse, ProfileVersionItem } from "@ntgm/sdk";
+import { fetchCurrentProfile, fetchProfileVersions, fetchProfileVersion, fetchArchiveChanges } from "@ntgm/sdk";
+import type { ProfileSummaryResponse, ProfileVersionItem, ArchiveChangesResponse } from "@ntgm/sdk";
 import styles from "./profile.module.css";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -122,22 +122,27 @@ export default function ProfilePage() {
   const [selectedVersion, setSelectedVersion] = useState<number>(0);
   const [selectedProfile, setSelectedProfile] = useState<ProfileSummaryResponse | null>(null);
   const [activeTab, setActiveTab] = useState("bazi");
+  const [selectedDimension, setSelectedDimension] = useState<string | null>(null);
+  const [profileChanges, setProfileChanges] = useState<ArchiveChangesResponse | null>(null);
 
   useEffect(() => {
     const load = async () => {
-      const [profile, versionList] = await Promise.all([
+      const [profile, versionList, changes] = await Promise.all([
         fetchCurrentProfile(API_BASE_URL).catch(() => null),
         fetchProfileVersions(API_BASE_URL).catch(() => null),
+        fetchArchiveChanges(API_BASE_URL).catch(() => null),
       ]);
       setCurrentProfile(profile);
       setVersions(versionList?.items || []);
       setSelectedVersion(profile?.profileVersion || 0);
       setSelectedProfile(profile);
+      setProfileChanges(changes);
     };
     load();
   }, []);
 
   const handleVersionSelect = async (version: number) => {
+    setSelectedDimension(null); // Close dimension drawer when switching versions
     setSelectedVersion(version);
     if (version === currentProfile?.profileVersion) {
       setSelectedProfile(currentProfile);
@@ -146,6 +151,11 @@ export default function ProfilePage() {
       setSelectedProfile(p);
     }
   };
+
+  // Close drawer when profile changes
+  useEffect(() => {
+    setSelectedDimension(null);
+  }, [selectedProfile]);
 
   // Extract ability traits from selected profile
   const abilityTraits = selectedProfile?.abilityTraits as {
@@ -251,11 +261,19 @@ export default function ProfilePage() {
                 </div>
                 <div className={styles.personalityGrid}>
                   {personalityEntries.map(([key, value]) => (
-                    <div key={key} className={styles.personalityItem}>
+                    <div
+                      key={key}
+                      className={`${styles.personalityItem} ${selectedDimension === key ? styles.selected : ""}`}
+                      onClick={() => setSelectedDimension(selectedDimension === key ? null : key)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && setSelectedDimension(selectedDimension === key ? null : key)}
+                    >
                       <div className={styles.personalityLabel}>
                         <span>{traitLabels[key] || key}</span>
                         <span className={styles.confidence}>
                           {Math.round((confidenceMap?.[key] || 0.5) * 100)}%
+                          {(confidenceMap?.[key] || 0.5) < 0.6 && <span className={styles.lowConfidence}>⚠</span>}
                         </span>
                       </div>
                       <div className="stat-bar">
@@ -291,9 +309,53 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* 证据展开面板 */}
+            {selectedDimension && (
+              <div className={`${styles.card} ${styles.evidenceDrawer}`}>
+                <div className="card-header">
+                  <span className="card-title">
+                    {traitLabels[selectedDimension] || selectedDimension} 维度详情
+                  </span>
+                  <button
+                    className={styles.closeBtn}
+                    onClick={() => setSelectedDimension(null)}
+                    aria-label="关闭"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className={styles.evidenceDrawerContent}>
+                  <div className={styles.dimensionValue}>
+                    <span className={styles.valueLabel}>当前值：</span>
+                    <span className={styles.valueNumber}>
+                      {Math.round((personalityTraits?.[selectedDimension] || 0) * 100)}%
+                    </span>
+                  </div>
+                  <div className={styles.dimensionConfidence}>
+                    <span className={styles.valueLabel}>置信度：</span>
+                    <span className={`${styles.confidenceBadge} ${
+                      (confidenceMap?.[selectedDimension] || 0) >= 0.7 ? styles.high :
+                      (confidenceMap?.[selectedDimension] || 0) >= 0.5 ? styles.medium : styles.low
+                    }`}>
+                      {Math.round((confidenceMap?.[selectedDimension] || 0) * 100)}%
+                      {(confidenceMap?.[selectedDimension] || 0) < 0.6 && " ⚠️"}
+                    </span>
+                  </div>
+                  <div className={styles.dimensionSources}>
+                    <h4 className={styles.sourcesTitle}>证据来源</h4>
+                    <ul className={styles.sourcesList}>
+                      <li>八字分析 - 基于出生日期的命盘推算</li>
+                      <li>问卷回答 - 基于 {selectedDimension} 相关问题的回答</li>
+                      <li>人生事件 - 记录的生活事件对维度的影响</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* 右侧：变化说明 + 证据来源 */}
             <div className={styles.rightColumn}>
-              {/* 本次变化 - placeholders since not from SDK */}
+              {/* 版本变化信息 */}
               <div className={`${styles.card} ${styles.changeCard}`}>
                 <div className="card-header">
                   <span className="card-title">本次变化</span>
@@ -302,16 +364,45 @@ export default function ProfilePage() {
                   </span>
                 </div>
                 <div className={styles.changeList}>
-                  <div className={styles.changeItem}>
-                    <div className={styles.changeHeader}>
-                      <span className={styles.changeDimension}>画像更新</span>
-                      <span className={`${styles.changeDirection} ${styles.increase}`}>
-                        ↑
-                        更新
-                      </span>
-                    </div>
-                    <p className={styles.changeReason}>根据最新问答和生活事件更新了你的画像。</p>
-                  </div>
+                  {(() => {
+                    const change = profileChanges?.items?.find((item) => item.toVersion === selectedVersion);
+                    if (!change) {
+                      return (
+                        <div className={styles.changeItem}>
+                          <div className={styles.changeHeader}>
+                            <span className={styles.changeDimension}>画像更新</span>
+                            <span className={`${styles.changeDirection} ${styles.increase}`}>↑ 更新</span>
+                          </div>
+                          <p className={styles.changeReason}>根据最新问答和生活事件更新了你的画像。</p>
+                        </div>
+                      );
+                    }
+                    const raised = change.changedDimensions?.raised || [];
+                    const lowered = change.changedDimensions?.lowered || [];
+                    return (
+                      <>
+                        {raised.map((dim) => (
+                          <div key={dim} className={styles.changeItem}>
+                            <div className={styles.changeHeader}>
+                              <span className={styles.changeDimension}>{dim}</span>
+                              <span className={`${styles.changeDirection} ${styles.increase}`}>↑ 提升</span>
+                            </div>
+                          </div>
+                        ))}
+                        {lowered.map((dim) => (
+                          <div key={dim} className={styles.changeItem}>
+                            <div className={styles.changeHeader}>
+                              <span className={styles.changeDimension}>{dim}</span>
+                              <span className={`${styles.changeDirection} ${styles.decrease}`}>↓ 下降</span>
+                            </div>
+                          </div>
+                        ))}
+                        {change.reasonSummary?.headline && (
+                          <p className={styles.changeReason}>{change.reasonSummary.headline}</p>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 

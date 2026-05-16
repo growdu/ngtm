@@ -31,3 +31,9 @@ class QuestionnaireAnswerResponse(BaseModel):
     recomputeTriggered: bool = True
     jobId: UUID
     profileVersion: int
+
+
+class QuestionnaireProgressResponse(BaseModel):
+    totalGroups: int
+    totalQuestions: int
+    groups: list[dict[str, Any]]

@@ -1,7 +1,7 @@
 import uuid
 from typing import Any
 
-from sqlalchemy import ForeignKey, Integer
+from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -15,4 +15,5 @@ class AdvicePlan(TimestampMixin, Base):
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     profile_version: Mapped[int] = mapped_column(Integer, nullable=False)
     summary: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    execution_feedback: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { fetchCurrentAdvice } from "@ntgm/sdk";
+import { fetchCurrentAdvice, submitAdviceFeedback } from "@ntgm/sdk";
 import type { AdviceCurrentResponse } from "@ntgm/sdk";
 import { useEffect, useState } from "react";
 import { AppShell } from "../components/Navigation";
@@ -105,6 +105,10 @@ export default function AdvicePage() {
   };
 
   const handleMarkDone = (id: string) => {
+    submitAdviceFeedback(API_BASE_URL, {
+      feedbackType: "mark_done",
+      adviceItemId: id,
+    }).catch(() => {});
     setAdviceList((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, status: "completed" } : item
@@ -113,11 +117,15 @@ export default function AdvicePage() {
     showToast("已标记为完成！");
   };
 
-  const handleFeedbackSubmit = () => {
+  const handleFeedbackSubmit = async () => {
     if (!selectedFeedback) {
       showToast("请选择反馈效果");
       return;
     }
+    await submitAdviceFeedback(API_BASE_URL, {
+      feedbackType: selectedFeedback,
+      feedbackText: feedbackText || undefined,
+    }).catch(() => {});
     showToast("反馈已提交，感谢你的反馈！");
     setSelectedFeedback(null);
     setFeedbackText("");

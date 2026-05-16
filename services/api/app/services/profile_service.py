@@ -34,20 +34,56 @@ class ProfileService:
         bazi = self.bazi_repository.get_current(db, user_id=user.id)
         questionnaire_count = sum(1 for record in records if record.intake_type == "questionnaire_answer")
 
+        # 解析问卷答案中的特质倾向
+        risk_answers = []
+        emotion_answers = []
+        career_answers = []
+        execution_answers = []
+        relationship_answers = []
+        rationality_answers = []
+
+        for record in records:
+            if record.intake_type == "questionnaire_answer" and record.payload:
+                question_id = record.payload.get("questionId", "")
+                value = record.payload.get("value", "")
+                if "risk" in question_id:
+                    risk_answers.append(value)
+                elif "emotion" in question_id or "conflict" in question_id or "setback" in question_id:
+                    emotion_answers.append(value)
+                elif "career" in question_id or "ambition" in question_id:
+                    career_answers.append(value)
+                elif "execution" in question_id or "procrastination" in question_id:
+                    execution_answers.append(value)
+                elif "relationship" in question_id or "social" in question_id:
+                    relationship_answers.append(value)
+                elif "logic" in question_id or "basis" in question_id:
+                    rationality_answers.append(value)
+
+        # 计算问卷答案偏向
+        risk_from_answers = sum(1 for v in risk_answers if v in ["快速抓住机会", "会，我享受高风险"]) / max(len(risk_answers), 1)
+        emotion_stab_from_answers = sum(1 for v in emotion_answers if v in ["很快就能调整", "先压住情绪再处理"]) / max(len(emotion_answers), 1)
+        career_from_answers = sum(1 for v in career_answers if v in ["超过50小时", "成为行业顶尖"]) / max(len(career_answers), 1)
+        execution_from_answers = sum(1 for v in execution_answers if v in ["立刻去做", "提前完成", "按时完成"]) / max(len(execution_answers), 1)
+        relationship_from_answers = sum(1 for v in relationship_answers if v in ["更喜欢独处", "偏向独处"]) / max(len(relationship_answers), 1)
+        rationality_from_answers = sum(1 for v in rationality_answers if v in ["理性分析和数据", "比较理性", "极度理性"]) / max(len(rationality_answers), 1)
+
         bazi_score_ratio = (bazi.score / 100) if bazi is not None else 0.6
 
-        risk_preference = min(0.35 + questionnaire_count * 0.08 + len(events) * 0.05 + bazi_score_ratio * 0.05, 0.92)
-        rationality = min(0.55 + questionnaire_count * 0.04 + bazi_score_ratio * 0.08, 0.9)
-        control_drive = min(0.5 + len(events) * 0.06, 0.88)
-        long_term = min(0.48 + questionnaire_count * 0.05, 0.89)
-        execution_strength = min(0.52 + len(events) * 0.07, 0.91)
+        risk_preference = min(0.35 + questionnaire_count * 0.06 + len(events) * 0.04 + bazi_score_ratio * 0.04 + risk_from_answers * 0.15, 0.92)
+        rationality = min(0.55 + questionnaire_count * 0.03 + bazi_score_ratio * 0.06 + rationality_from_answers * 0.12, 0.9)
+        control_drive = min(0.5 + len(events) * 0.05, 0.88)
+        long_term = min(0.48 + questionnaire_count * 0.04 + risk_from_answers * 0.08, 0.89)
+        execution_strength = min(0.52 + len(events) * 0.06 + execution_from_answers * 0.12, 0.91)
+        emotion_stability = min(0.5 + questionnaire_count * 0.03 + emotion_stab_from_answers * 0.15, 0.82)
+        introversion = max(0.3 + relationship_from_answers * 0.25 - questionnaire_count * 0.02, 0.2)
 
         personality_traits = {
             "riskPreference": round(risk_preference, 2),
             "rationality": round(rationality, 2),
-            "emotionStability": round(min(0.5 + questionnaire_count * 0.03, 0.82), 2),
+            "emotionStability": round(emotion_stability, 2),
             "longTermOrientation": round(long_term, 2),
             "controlDrive": round(control_drive, 2),
+            "introversion": round(introversion, 2),
         }
         ability_traits = {
             "executionStrength": round(execution_strength, 2),
@@ -55,11 +91,12 @@ class ProfileService:
             "resourceIntegration": round(min(0.54 + len(events) * 0.03, 0.84), 2),
         }
         relationship_traits = {
-            "relationshipDependency": round(max(0.45 - questionnaire_count * 0.02, 0.2), 2),
+            "relationshipDependency": round(max(0.45 - questionnaire_count * 0.02 + (1 - relationship_from_answers) * 0.15, 0.2), 2),
             "conflictHandling": round(min(0.5 + questionnaire_count * 0.04, 0.82), 2),
+            "introversion": round(introversion, 2),
         }
         fortune_traits = {
-            "careerDrive": round(min(0.6 + len(events) * 0.04, 0.9), 2),
+            "careerDrive": round(min(0.6 + len(events) * 0.04 + career_from_answers * 0.12, 0.9), 2),
             "wealthDrive": round(min(0.56 + questionnaire_count * 0.03, 0.86), 2),
         }
         confidence_map = {

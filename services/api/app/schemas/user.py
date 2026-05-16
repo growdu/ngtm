@@ -14,7 +14,8 @@ class BasicIntakeRequest(BaseModel):
 class BasicIntakeResponse(BaseModel):
     userId: UUID
     accepted: bool = True
-    nextAction: str = "analyze_bazi"
+    nextAction: str = "questionnaire"
+    profileVersion: int = 1
 
 
 class UserMeResponse(BaseModel):
