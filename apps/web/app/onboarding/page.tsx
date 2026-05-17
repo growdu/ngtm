@@ -76,24 +76,32 @@ export default function OnboardingPage() {
   };
 
   const handleNext = async () => {
+    // Step 3: show "正在生成" feedback then advance
+    if (currentStep === 3) {
+      setIsAnalysing(true);
+      setTimeout(() => {
+        setIsAnalysing(false);
+        if (currentStep < 5) {
+          setCurrentStep(currentStep + 1);
+        }
+      }, 2000);
+      return;
+    }
+
     if (!validateStep()) return;
 
     if (currentStep === 1) {
       setIsSubmitting(true);
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
       try {
         await submitBasicIntake(API_BASE_URL, {
           name: formData.name,
           gender: formData.gender === "M" ? "male" : "female",
           birthDatetime: `${formData.birthDate}T${formData.birthTime || "12:00"}:00`,
           birthPlace: formData.birthPlace,
-        }, controller.signal);
+        });
       } catch {
-        // API error — show toast but allow user to proceed
         showToast("保存失败，但可以继续下一步", "error");
       }
-      clearTimeout(timeout);
       setIsSubmitting(false);
     }
 
@@ -102,28 +110,10 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleAnalysingComplete = () => {
-    setIsAnalysing(false);
-    if (currentStep < 5) {
-      setCurrentStep(currentStep + 1);
+  const handlePrev = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
     }
-  };
-
-  const handleNext = async () => {
-    // Step 3: show "正在生成" feedback then advance
-    if (currentStep === 3) {
-      setIsAnalysing(true);
-      setTimeout(handleAnalysingComplete, 2000);
-      return;
-    }
-
-    if (!validateStep()) return;
-    showToast("建档信息已保存！");
-    setTimeout(() => {
-      if (currentStep < 5) {
-        setCurrentStep(currentStep + 1);
-      }
-    }, 1500);
   };
 
   const handlePhotoUpload = (type: "face" | "palm") => (e: React.ChangeEvent<HTMLInputElement>) => {
